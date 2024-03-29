@@ -47,8 +47,8 @@ n="$(printf "%02d" $(( 10#${NODE_NUM} )))"
 cat >/usr/local/bin/ssh.sh <<EOL
 #!/bin/bash
 set -e
-dockerize -wait tcp://192.168.66.1${n}:22 -timeout 300s &>/dev/null
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@192.168.66.1${n} -i vagrant.key -p 22 -q \$@
+dockerize -wait tcp://192.168.66.1${n}:22 -timeout 1800s &>/dev/null
+ssh -vvv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no cloud-user@192.168.66.1${n} -i s390x_user.key -p 22 -q \$@
 EOL
 chmod u+x /usr/local/bin/ssh.sh
 echo "done" >/ssh_ready
@@ -163,16 +163,11 @@ for size in ${USB_SIZES[@]}; do
   let "disk_num+=1"
 done
 
-
-exec qemu-system-x86_64 -enable-kvm -drive format=qcow2,file=${next},if=virtio,cache=unsafe ${block_dev_arg} \
-  -device virtio-net-pci,netdev=network0,mac=52:55:00:d1:55:${n} \
+exec qemu-system-s390x -enable-kvm -drive format=qcow2,file=${next},if=virtio,cache=unsafe ${block_dev_arg} \
+  -device virtio-net-ccw,netdev=network0,mac=52:55:00:d1:55:${n} \
   -netdev tap,id=network0,ifname=tap${n},script=no,downscript=no \
-  -device virtio-rng-pci \
-  -initrd /initrd.img \
-  -kernel /vmlinuz \
-  -append "$(cat /kernel.args) $(cat /additional.kernel.args) ${KERNEL_ARGS}" \
-  -vnc :${n} -cpu host,migratable=no,+invtsc -m ${MEMORY} -smp ${CPU} \
-  -serial pty -M q35,accel=kvm,kernel_irqchip=split \
-  -device intel-iommu,intremap=on,caching-mode=on -device intel-hda -device hda-duplex -device AC97 \
+  -device virtio-rng \
+  -vnc :${n} -cpu host -m ${MEMORY} -smp ${CPU} \
+  -serial pty -M s390-ccw-virtio,accel=kvm  \
   -uuid $(cat /proc/sys/kernel/random/uuid) \
   ${QEMU_ARGS}

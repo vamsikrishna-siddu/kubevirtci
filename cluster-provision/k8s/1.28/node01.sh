@@ -20,6 +20,10 @@ rules:
 EOF
 fi
 
+export PATH=$PATH:/usr/local/share/openvswitch/scripts
+ovs-ctl start
+ovs-ctl status
+
 timeout=30
 interval=5
 while ! hostnamectl  |grep Transient ; do

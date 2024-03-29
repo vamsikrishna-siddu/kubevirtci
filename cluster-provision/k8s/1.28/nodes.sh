@@ -11,6 +11,10 @@ if [ -f /home/vagrant/single_stack ]; then
     control_ip=[fd00::101]
 fi
 
+export PATH=$PATH:/usr/local/share/openvswitch/scripts
+ovs-ctl start
+ovs-ctl status
+
 timeout=30
 interval=5
 while ! hostnamectl  |grep Transient ; do
@@ -48,10 +52,22 @@ do
     sleep 2
 done
 
+#if [ -f /etc/sysconfig/kubelet ]; then
+    # TODO use config file! this is deprecated
+#    cat <<EOT >>/etc/sysconfig/kubelet
+#KUBELET_EXTRA_ARGS=${KUBELET_CGROUP_ARGS} --fail-swap-on=false ${nodeip} --feature-gates=CPUManager=true,NodeSwap=true --cpu-manager-policy=static --kube-reserved=cpu=250m --system-reserved=cpu=250m
+#EOT
+#else
+#    cat <<EOT >>/etc/systemd/system/kubelet.service.d/09-kubeadm.conf
+#Environment="KUBELET_CPUMANAGER_ARGS=--fail-swap-on=false --feature-gates=CPUManager=true,NodeSwap=true ${nodeip} --cpu-manager-policy=static --kube-reserved=cpu=250m --system-reserved=cpu=250m"
+#EOT
+#sed -i 's/$KUBELET_EXTRA_ARGS/$KUBELET_EXTRA_ARGS $KUBELET_CPUMANAGER_ARGS/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+#fi
+
 if [ -f /etc/sysconfig/kubelet ]; then
     # TODO use config file! this is deprecated
     cat <<EOT >>/etc/sysconfig/kubelet
-KUBELET_EXTRA_ARGS=${KUBELET_CGROUP_ARGS} --fail-swap-on=false ${nodeip} --feature-gates=CPUManager=true,NodeSwap=true --cpu-manager-policy=static --kube-reserved=cpu=250m --system-reserved=cpu=250m
+KUBELET_EXTRA_ARGS=${KUBELET_CGROUP_ARGS} --fail-swap-on=false ${nodeip}
 EOT
 else
     cat <<EOT >>/etc/systemd/system/kubelet.service.d/09-kubeadm.conf
@@ -72,9 +88,9 @@ fi
 sudo swapoff -a
 
 until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done
-
 kubeadm join --token abcdef.1234567890123456 ${control_ip}:6443 --ignore-preflight-errors=all --discovery-token-unsafe-skip-ca-verification=true
 
 # ceph mon permission
 mkdir -p /var/lib/rook
 chcon -t container_file_t /var/lib/rook
+sleep 600

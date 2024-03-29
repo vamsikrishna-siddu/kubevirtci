@@ -64,16 +64,19 @@ else
   exit 1
 fi
 
-
 export CRIO_VERSION=1.28
 cat << EOF >/etc/yum.repos.d/devel_kubic_libcontainers_stable_cri-o_${CRIO_VERSION}.repo
 [isv_kubernetes_addons_cri-o_stable_v${CRIO_VERSION}]
 name=CRI-O v${CRIO_VERSION} (Stable) (rpm)
 type=rpm-md
-baseurl=https://storage.googleapis.com/kubevirtci-crio-mirror/isv_kubernetes_addons_cri-o_stable_v${CRIO_VERSION}
+baseurl=https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/${CRIO_VERSION}/CentOS_9_Stream/
 gpgcheck=0
 enabled=1
 EOF
+
+export PATH=$PATH:/usr/local/share/openvswitch/scripts
+ovs-ctl start
+ovs-ctl status
 
 dnf install -y cri-o
 
@@ -147,8 +150,8 @@ cni_ipv6_diff="/tmp/cni_ipv6.diff"
 
 cp /tmp/cni.do-not-change.yaml $cni_manifest
 mv /tmp/cni.do-not-change.yaml $cni_manifest_ipv6
-patch $cni_manifest $cni_diff
-patch $cni_manifest_ipv6 $cni_ipv6_diff
+#patch $cni_manifest $cni_diff
+#patch $cni_manifest_ipv6 $cni_ipv6_diff
 
 cp /tmp/local-volume.yaml /provision/local-volume.yaml
 
@@ -203,13 +206,14 @@ EOF
 
 echo "net.netfilter.nf_conntrack_max=1000000" >> /etc/sysctl.conf
 sysctl --system
-
 systemctl restart NetworkManager
 
-nmcli connection modify "System eth0" \
-   ipv6.method auto \
-   ipv6.addr-gen-mode eui64
-nmcli connection up "System eth0"
+#This part of the code is removing the global scope from ipv6
+#As a result it is causing issues in k8s provisining.
+#nmcli connection modify "System eth0" \
+#   ipv6.method auto \
+#   ipv6.addr-gen-mode eui64
+#nmcli connection up "System eth0"
 
 kubeadmn_patches_path="/provision/kubeadm-patches"
 mkdir -p $kubeadmn_patches_path
@@ -301,6 +305,8 @@ kubeadm_raw_ipv6=/tmp/kubeadm_ipv6.conf
 kubeadm_manifest="/etc/kubernetes/kubeadm.conf"
 kubeadm_manifest_ipv6="/etc/kubernetes/kubeadm_ipv6.conf"
 
+dnf install -y gettext
+
 envsubst < $kubeadm_raw > $kubeadm_manifest
 envsubst < $kubeadm_raw_ipv6 > $kubeadm_manifest_ipv6
 
@@ -310,8 +316,8 @@ until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done
 kubeadm init --config $kubeadm_manifest -v5
 
 kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p "$(cat $kubeadmn_patches_path/add-security-context-deployment-patch.yaml)"
-kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f "$cni_manifest"
 
+kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f "$cni_manifest"
 # Wait at least for 7 pods
 while [[ "$(kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system --no-headers | wc -l)" -lt 7 ]]; do
     echo "Waiting for at least 7 pods to appear ..."

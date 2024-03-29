@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 # shellcheck source=cluster-up/cluster/ephemeral-provider-common.sh
 source "${KUBEVIRTCI_PATH}/cluster/ephemeral-provider-common.sh"
