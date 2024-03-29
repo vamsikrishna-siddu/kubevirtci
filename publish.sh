@@ -1,5 +1,5 @@
-#!/bin/bash
-
+!/bin/bash
+###########
 set -e
 
 export KUBEVIRTCI_TAG=$(date +"%y%m%d%H%M")-$(git rev-parse --short HEAD)
