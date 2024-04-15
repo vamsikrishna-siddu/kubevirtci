@@ -176,6 +176,11 @@ function up() {
 
     ${_cli} scp --prefix $provider_prefix /etc/kubernetes/admin.conf - >${KUBEVIRTCI_CONFIG_PATH}/$KUBEVIRT_PROVIDER/.kubeconfig
 
+    echo "kubernetes api-server url: https://$(_main_ip):$(_port k8s)"
+    echo "cli.... ${_cli}"
+
+    sleep 1600
+
     # Set server and disable tls check
     export KUBECONFIG=${KUBEVIRTCI_CONFIG_PATH}/$KUBEVIRT_PROVIDER/.kubeconfig
     kubectl config set-cluster kubernetes --server="https://$(_main_ip):$(_port k8s)"
