@@ -73,7 +73,7 @@ else
   consoleconfig=""
 fi
 
-virt-install \
+sudo virt-install \
   --memory 2048 \
   --vcpus 2 \
   --name $DOMAIN_NAME \

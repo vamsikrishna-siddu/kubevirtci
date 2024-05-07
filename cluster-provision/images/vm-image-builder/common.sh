@@ -10,6 +10,9 @@ go_style_arch_name() {
     aarch64|arm64)
         echo "arm64"
         ;;
+    s390x)
+        echo "s390x"
+        ;;
     *)
         echo "ERROR: invalid Arch, ${arch}"
         exit 1
@@ -27,6 +30,9 @@ linux_style_arch_name() {
     aarch64|arm64)
         echo "aarch64"
         ;;
+    s390x)
+        echo "s390x"
+        ;;
     *)
         echo "ERROR: invalid Arch, ${arch}"
         exit 1
@@ -38,3 +44,4 @@ go_style_local_arch() {
    local arch=$(uname -m)
    go_style_arch_name $arch
 }
+
