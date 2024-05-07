@@ -6,6 +6,8 @@ SCRIPT_PATH=$(dirname "$(realpath "$0")")
 
 ARTIFACTS=${ARTIFACTS:-${PWD}}
 
+source ${KUBEVIRTCI_PATH}/cluster-provision/images/vm-image-builder/common.sh
+
 config_file=${1:-}
 sonobuoy_version=0.56.9
 [[ -f "$config_file" ]] && sonobuoy_version=$(jq -r '.Version' "$config_file" | grep -oE '[0-9\.]+')
@@ -61,7 +63,7 @@ teardown() {
     fi
 }
 
-curl -L "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${sonobuoy_version}/sonobuoy_${sonobuoy_version}_linux_amd64.tar.gz" | tar -xz
+curl -L "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${sonobuoy_version}/sonobuoy_${sonobuoy_version}_linux_${go_style_local_arch}.tar.gz" | tar -xz
 
 trap teardown EXIT
 
@@ -77,3 +79,4 @@ if [ -n "$SONOBUOY_EXTRA_ARGS" ]; then
 fi
 
 $run_cmd
+
