@@ -34,3 +34,13 @@ func appendIfExplicit(ports nat.PortMap, exposedPort int, flagSet *pflag.FlagSet
 	}
 	return nil
 }
+
+// GetSSHCredentialsByArchitecture returns the SSH key and SSH user
+// based on the system architecture.
+func GetSSHCredentialsByArchitecture(arch string) (string, string) {
+	if arch == "s390x" {
+		return "s390x_user.key", "cloud-user"
+	}
+
+	return "vagrant.key", "vagrant"
+}

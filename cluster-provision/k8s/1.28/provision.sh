@@ -2,6 +2,8 @@
 
 set -ex
 
+ARCH=$(uname -m)
+
 KUBEVIRTCI_SHARED_DIR=/var/lib/kubevirtci
 mkdir -p $KUBEVIRTCI_SHARED_DIR
 export ISTIO_VERSION=1.15.0
@@ -58,7 +60,12 @@ dnf install -y container-selinux
 
 dnf install -y libseccomp-devel
 
+#openvswitch is not available by default from the dnf package.
+if [ "$ARCH" == "s390x" ]; then
+ dnf install -y https://kojipkgs.fedoraproject.org//packages/openvswitch/2.16.0/2.fc36/s390x/openvswitch-2.16.0-2.fc36.s390x.rpm
+ systemctl enable openvswitch
+else
 dnf install -y centos-release-nfv-openvswitch
 dnf install -y openvswitch2.16
-
+fi 
 dnf install -y NetworkManager NetworkManager-ovs NetworkManager-config-server

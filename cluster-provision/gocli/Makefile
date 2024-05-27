@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+ARCH := $(shell uname -m)
 
 IMAGES_FILE ?= images.json
 KUBEVIRTCI_IMAGE_REPO ?= quay.io/kubevirtci
@@ -19,7 +20,7 @@ test:
 
 .PHONY: gocli
 cli:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -ldflags "-X 'kubevirt.io/kubevirtci/cluster-provision/gocli/images.SUFFIX=:$(KUBEVIRTCI_TAG)'" -o $(BIN_DIR)/cli ./cmd/cli
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) $(GO) build -ldflags "-X 'kubevirt.io/kubevirtci/cluster-provision/gocli/images.SUFFIX=:$(KUBEVIRTCI_TAG)'" -o $(BIN_DIR)/cli ./cmd/cli
 .PHONY: fmt
 fmt:
 	$(GO) fmt ./cmd/...
