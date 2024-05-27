@@ -193,13 +193,49 @@ if [ "${NUMA}" -gt 1 ]; then
 fi
 
 if ["$ARCH" == "s390x"]; then
-exec qemu-system-s390x -enable-kvm -drive format=qcow2,file=${next},if=virtio,cache=unsafe ${block_dev_arg} \
+qemu_system_cmd="qemu-system-s390x -enable-kvm -drive format=qcow2,file=${next},if=virtio,cache=unsafe ${block_dev_arg} \
   -device virtio-net-ccw,netdev=network0,mac=52:55:00:d1:55:${n} \
   -netdev tap,id=network0,ifname=tap${n},script=no,downscript=no \
   -device virtio-rng \
   -vnc :${n} -cpu host -m ${MEMORY} -smp ${CPU} \
   -serial pty -M s390-ccw-virtio,accel=kvm  \
-  ${QEMU_ARGS}
+  ${QEMU_ARGS}"
+
+# Remove secondary network devices from qemu_system_cmd and move them to qemu_monitor_cmds, so that those devices are later added after VM is started using qemu monitor to avoid primary network interface to be named other than eth0
+qemu_monitor_cmds=()
+IFS=' ' read -r -a qemu_parts <<< "$qemu_system_cmd"
+for part_index in "${!qemu_parts[@]}"; do
+  part="${qemu_parts[$part_index]}"
+  nxtpart="${qemu_parts[$part_index+1]}"
+  if [ "$part" == "-netdev" ]; then
+    if [[ "$nxtpart" == *"secondarynet"* ]]; then
+      qemu_system_cmd=$(echo "$qemu_system_cmd" | sed "s/ -netdev $nxtpart//")
+      qemu_monitor_cmds+=("netdev_add $nxtpart")
+    fi
+  elif [ "$part" == "-device" ] && [[ "$nxtpart" == *"virtio-net-ccw"* ]]; then
+    if [[ $nxtpart == *"secondarynet"* ]]; then
+      qemu_system_cmd=$(echo "$qemu_system_cmd" | sed "s/ -device $nxtpart//")
+      qemu_monitor_cmds+=("device_add $nxtpart")
+    fi
+  fi
+done
+
+qemu_system_cmd+=" -monitor unix:/tmp/qemu-monitor.sock,server,nowait"
+PID=0
+echo "PID initially is $PID"
+eval "nohup $qemu_system_cmd &"
+PID=$!
+echo "PID is $PID"
+
+if [ "${#qemu_monitor_cmds[@]}" -gt 0 ]; then
+  sleep 15
+  #Sorted in reverse alphabetical order so that -netdev are passed first then -dev
+  IFS=$'\t' qemu_monitor_cmds_sorted=($(printf "%s\n" "${qemu_monitor_cmds[@]}" | sort -r))
+  for qemu_monitor_cmd in "${qemu_monitor_cmds_sorted[@]}"; do
+    echo "$qemu_monitor_cmd"  | socat - UNIX-CONNECT:/tmp/qemu-monitor.sock
+  done
+fi
+wait $PID
 else 
 exec qemu-system-x86_64 -enable-kvm -drive format=qcow2,file=${next},if=virtio,cache=unsafe ${block_dev_arg} \
   -device virtio-net-pci,netdev=network0,mac=52:55:00:d1:55:${n} \
