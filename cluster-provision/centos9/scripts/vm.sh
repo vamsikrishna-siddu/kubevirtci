@@ -11,6 +11,14 @@ KERNEL_ARGS=""
 NEXT_DISK=""
 BLOCK_DEV=""
 BLOCK_DEV_SIZE=""
+VM_USER="vagrant"
+VM_SSH_KEY="vagrant.key"
+ARCH="$(uname-m)"
+
+if ["$ARCH" == "s390x"]; then
+  VM_USER="cloud-user"
+  VM_SSH_KEY="s390x_usr"
+fi
 
 while true; do
   case "$1" in
@@ -50,7 +58,7 @@ cat >/usr/local/bin/ssh.sh <<EOL
 #!/bin/bash
 set -e
 dockerize -wait tcp://192.168.66.1${n}:22 -timeout 300s &>/dev/null
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no vagrant@192.168.66.1${n} -i vagrant.key -p 22 -q \$@
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${VM_USER}@192.168.66.1${n} -i ${VM_SSH_KEY} -p 22 -q \$@
 EOL
 chmod u+x /usr/local/bin/ssh.sh
 echo "done" >/ssh_ready
@@ -184,6 +192,15 @@ if [ "${NUMA}" -gt 1 ]; then
     done
 fi
 
+if ["$ARCH" == "s390x"]; then
+exec qemu-system-s390x -enable-kvm -drive format=qcow2,file=${next},if=virtio,cache=unsafe ${block_dev_arg} \
+  -device virtio-net-ccw,netdev=network0,mac=52:55:00:d1:55:${n} \
+  -netdev tap,id=network0,ifname=tap${n},script=no,downscript=no \
+  -device virtio-rng \
+  -vnc :${n} -cpu host -m ${MEMORY} -smp ${CPU} \
+  -serial pty -M s390-ccw-virtio,accel=kvm  \
+  ${QEMU_ARGS}
+else 
 exec qemu-system-x86_64 -enable-kvm -drive format=qcow2,file=${next},if=virtio,cache=unsafe ${block_dev_arg} \
   -device virtio-net-pci,netdev=network0,mac=52:55:00:d1:55:${n} \
   -netdev tap,id=network0,ifname=tap${n},script=no,downscript=no \
@@ -196,3 +213,4 @@ exec qemu-system-x86_64 -enable-kvm -drive format=qcow2,file=${next},if=virtio,c
   -device intel-iommu,intremap=on,caching-mode=on -device intel-hda -device hda-duplex -device AC97 \
   -uuid $(cat /proc/sys/kernel/random/uuid) \
   ${QEMU_ARGS}
+fi

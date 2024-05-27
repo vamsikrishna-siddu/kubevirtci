@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -121,6 +122,15 @@ func NewRunCommand() *cobra.Command {
 }
 
 func run(cmd *cobra.Command, args []string) (retErr error) {
+
+	arch := runtime.GOARCH
+	var qemuArg string
+
+	if arch == "s390x" {
+		qemuArg = "virtio-net-ccw"
+	} else {
+		qemuArg = "virtio-net-pci"
+	}
 
 	prefix, err := cmd.Flags().GetString("prefix")
 	if err != nil {
@@ -430,7 +440,8 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			netSuffix := fmt.Sprintf("%d-%d", x, i)
 			macSuffix := fmt.Sprintf("%02x", macCounter)
 			macCounter++
-			nodeQemuArgs = fmt.Sprintf("%s -device virtio-net-pci,netdev=secondarynet%s,mac=52:55:00:d1:56:%s -netdev tap,id=secondarynet%s,ifname=stap%s,script=no,downscript=no", nodeQemuArgs, netSuffix, macSuffix, netSuffix, netSuffix)
+
+			nodeQemuArgs = fmt.Sprintf("%s -device %s,netdev=secondarynet%s,mac=52:55:00:d1:56:%s -netdev tap,id=secondarynet%s,ifname=stap%s,script=no,downscript=no", nodeQemuArgs, qemuArg, netSuffix, macSuffix, netSuffix, netSuffix)
 		}
 
 		nodeName := nodeNameFromIndex(x + 1)
@@ -636,11 +647,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return fmt.Errorf("checking for matching provision script for node %s failed", nodeName)
 		}
 
-		for _, s := range soundcardPCIIDs {
-			// move the VM sound cards to a vfio-pci driver to prepare for assignment
-			err = prepareDeviceForAssignment(cli, nodeContainer(prefix, nodeName), s, "")
-			if err != nil {
-				return err
+		// sound cards are not supported on s390x.
+		if arch != "s390x" {
+			for _, s := range soundcardPCIIDs {
+				// move the VM sound cards to a vfio-pci driver to prepare for assignment
+				err = prepareDeviceForAssignment(cli, nodeContainer(prefix, nodeName), s, "")
+				if err != nil {
+					return err
+				}
 			}
 		}
 

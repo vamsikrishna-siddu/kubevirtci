@@ -1,9 +1,14 @@
+ARG ARCH
 
-FROM quay.io/kubevirtci/fedora@sha256:e3a6087f62f288571db14defb7e0e10ad7fe6f973f567b0488d3aac5e927035a
+FROM fedora:latest as base
 
 ARG centos_version
 
 RUN dnf -y install jq iptables iproute dnsmasq qemu openssh-clients screen bind-utils tcpdump iputils && dnf clean all
+
+COPY scripts/* /
+
+FROM base AS fedora-x86
 
 WORKDIR /
 
@@ -30,4 +35,21 @@ RUN /download_box.sh ${CENTOS_URL}
 RUN curl -L -o /initrd.img http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/initrd.img
 RUN curl -L -o /vmlinuz http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/vmlinuz
 
-COPY scripts/* /
+
+FROM base as fedora-s390x
+
+WORKDIR /
+
+COPY s390x_user.key /s390x_user.key
+
+RUN chmod 700 s390x_user.key
+
+RUN curl -LO https://github.com/ibm-jitendra/kubevirt_pkgs/raw/main/dockerize-linux-s390x.tar.gz \
+  && tar -xvf dockerize-linux-s390x.tar.gz \
+  && rm dockerize-linux-s390x.tar.gz \
+  && chmod u+x dockerize \
+  && mv dockerize /usr/local/bin/
+
+COPY  CentOS-Stream-GenericCloud-9-latest.s390x.qcow2 box.qcow2
+
+FROM fedora-${ARCH} AS final
