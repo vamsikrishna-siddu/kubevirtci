@@ -13,12 +13,12 @@ fi
 
 ARCH=$(uname -m)
 SSH_USER="vagrant"
-KUBELETE_EXTRA_ARGS_ARCH="--fail-swap-on=false ${nodeip} --feature-gates=CPUManager=true,NodeSwap=true --cpu-manager-policy=static --kube-reserved=cpu=250m --system-reserved=cpu=250m"
+KUBELET_EXTRA_ARGS_ARCH="--fail-swap-on=false ${nodeip} --feature-gates=CPUManager=true,NodeSwap=true --cpu-manager-policy=static --kube-reserved=cpu=250m --system-reserved=cpu=250m"
 
 if [ "$ARCH" == "s390x" ]; then
    SSH_USER="cloud-user"
    # cpu manager feature is not supported on s390x.
-   KUBELETE_EXTRA_ARGS_ARCH="--fail-swap-on=false ${nodeip} --feature-gates=NodeSwap=true"
+   KUBELET_EXTRA_ARGS_ARCH="--fail-swap-on=false ${nodeip} --feature-gates=NodeSwap=true"
 
 fi
 
@@ -62,11 +62,11 @@ done
 if [ -f /etc/sysconfig/kubelet ]; then
     # TODO use config file! this is deprecated
     cat <<EOT >>/etc/sysconfig/kubelet
-KUBELET_EXTRA_ARGS=${KUBELET_CGROUP_ARGS} $KUBELETE_EXTRA_ARGS_ARCH 
+KUBELET_EXTRA_ARGS=${KUBELET_CGROUP_ARGS} $KUBELET_EXTRA_ARGS_ARCH 
 EOT
 else
     cat <<EOT >>/etc/systemd/system/kubelet.service.d/09-kubeadm.conf
-Environment="KUBELET_CPUMANAGER_ARGS=$KUBELETE_EXTRA_ARGS_ARCH"
+Environment="KUBELET_CPUMANAGER_ARGS=$KUBELET_EXTRA_ARGS_ARCH"
 EOT
 sed -i 's/$KUBELET_EXTRA_ARGS/$KUBELET_EXTRA_ARGS $KUBELET_CPUMANAGER_ARGS/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 fi
