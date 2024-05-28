@@ -17,7 +17,6 @@ ARCH="$(uname-m)"
 
 if ["$ARCH" == "s390x"]; then
   VM_USER="cloud-user"
-  VM_SSH_KEY="s390x_usr"
 fi
 
 while true; do
