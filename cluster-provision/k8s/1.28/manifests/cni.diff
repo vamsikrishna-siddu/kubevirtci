@@ -29,6 +29,7 @@
          # and CNI network config file on each node.
          - name: install-cni
 -          image: docker.io/calico/cni:v3.27.2
++          image: quay.io/calico/cni:v3.27.2
            imagePullPolicy: IfNotPresent
            command: ["/opt/cni/bin/install"]
            envFrom:
