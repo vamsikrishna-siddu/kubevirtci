@@ -198,6 +198,7 @@ qemu_system_cmd="qemu-system-s390x -enable-kvm -drive format=qcow2,file=${next},
   -device virtio-rng \
   -vnc :${n} -cpu host -m ${MEMORY} -smp ${CPU} \
   -serial pty -M s390-ccw-virtio,accel=kvm  \
+  -uuid $(cat /proc/sys/kernel/random/uuid) \
   ${QEMU_ARGS}"
 
 # Remove secondary network devices from qemu_system_cmd and move them to qemu_monitor_cmds, so that those devices are later added after VM is started using qemu monitor to avoid primary network interface to be named other than eth0
