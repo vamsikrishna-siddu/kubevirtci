@@ -215,7 +215,7 @@ sysctl --system
 
 systemctl restart NetworkManager
 
-if ["$arch" != "s390x"]; then
+if [ "$arch" != "s390x" ]; then
 nmcli connection modify "System eth0" \
    ipv6.method auto \
    ipv6.addr-gen-mode eui64
