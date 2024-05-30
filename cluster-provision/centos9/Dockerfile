@@ -10,7 +10,7 @@ WORKDIR /
 
 ENV LIBGUESTFS_BACKEND=direct
 
-ENV CENTOS_URL_X86 https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-Vagrant-9-$centos_version.x86_64.vagrant-libvirt.box
+ENV CENTOS_URL_amd64 https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-Vagrant-9-$centos_version.x86_64.vagrant-libvirt.box
 
 ENV CENTOS_URL_s390x https://cloud.centos.org/centos/9-stream/s390x/images/CentOS-Stream-GenericCloud-9-$centos_version.s390x.qcow2
 
@@ -23,8 +23,8 @@ RUN CENTOS_URL=$(eval echo \$CENTOS_URL_${ARCH}) && \
    /download_box.sh $CENTOS_URL
 
 RUN if test "${ARCH}" != "s390x"; then \
-       curl -L -o /initramfs.img http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/initrd.img && \
-       curl -L -o /vmlinuz http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/vmlinuz; \
+       curl -L -o /initramfs-amd64.img http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/initrd.img && \
+       curl -L -o /vmlinuz-amd64  http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/vmlinuz; \
     else \
        virt-sysprep -v -x -a box.qcow2 --no-selinux-relabel --run-command "useradd -m cloud-user" && \
        virt-sysprep -a box.qcow2 --no-selinux-relabel --append '/etc/cloud/cloud.cfg:runcmd:' && \
@@ -51,7 +51,7 @@ ENV DOCKERIZE_VERSION v0.6.1
 
 ENV DOCKERIZE_URL_s390x https://github.com/ibm-jitendra/kubevirt_pkgs/raw/main/dockerize-linux-s390x.tar.gz
 
-ENV DOCKERIZE_URL_X86 https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+ENV DOCKERIZE_URL_amd64 https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
 
 RUN DOCKERIZE_URL=$(eval echo \$DOCKERIZE_URL_${ARCH}) && \

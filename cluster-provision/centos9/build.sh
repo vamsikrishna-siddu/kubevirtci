@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ARCH=$(uname -m)
 
 if [[ "$ARCH" == "x86_64" ]] || [[ "$ARCH" == "amd64" ]] ; then
-  ARCH="x86"
+  ARCH="amd64"
 fi
 
 centos_version="$(cat $DIR/version | tr -d '\n')"
