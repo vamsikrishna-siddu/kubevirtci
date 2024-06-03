@@ -211,7 +211,6 @@ if [ "$ARCH" == "s390x" ]; then
     -uuid $(cat /proc/sys/kernel/random/uuid) \
     ${QEMU_ARGS}"
 
-# Remove secondary network devices from qemu_system_cmd and move them to qemu_monitor_cmds, so that those devices are later added after VM is started using qemu monitor to avoid primary network interface to be named other than eth0
 qemu_monitor_cmds=()
 IFS=' ' read -r -a qemu_parts <<< "$qemu_system_cmd"
 for part_index in "${!qemu_parts[@]}"; do
@@ -239,7 +238,6 @@ echo "PID is $PID"
 
     if [ "${#qemu_monitor_cmds[@]}" -gt 0 ]; then
        sleep 15
-       #Sorted in reverse alphabetical order so that -netdev are passed first then -dev
        IFS=$'\t' qemu_monitor_cmds_sorted=($(printf "%s\n" "${qemu_monitor_cmds[@]}" | sort -r))
        for qemu_monitor_cmd in "${qemu_monitor_cmds_sorted[@]}"; do
        echo "$qemu_monitor_cmd"  | socat - UNIX-CONNECT:/tmp/qemu-monitor.sock
