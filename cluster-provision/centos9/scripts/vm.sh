@@ -192,14 +192,24 @@ if [ "${NUMA}" -gt 1 ]; then
 fi
 
 if [ "$ARCH" == "s390x" ]; then
-qemu_system_cmd="qemu-system-s390x -enable-kvm -drive format=qcow2,file=${next},if=virtio,cache=unsafe ${block_dev_arg} \
-  -device virtio-net-ccw,netdev=network0,mac=52:55:00:d1:55:${n} \
-  -netdev tap,id=network0,ifname=tap${n},script=no,downscript=no \
-  -device virtio-rng \
-  -vnc :${n} -cpu host -m ${MEMORY} -smp ${CPU} \
-  -serial pty -M s390-ccw-virtio,accel=kvm  \
-  -uuid $(cat /proc/sys/kernel/random/uuid) \
-  ${QEMU_ARGS}"
+    qemu_system_cmd="qemu-system-s390x \
+    -enable-kvm \
+    -drive format=qcow2,file=${next},if=none,cache=unsafe,id=drive1 ${block_dev_arg} \
+    -device virtio-blk,drive=drive1,bootindex=1 \
+    -device virtio-net-ccw,netdev=network0,mac=52:55:00:d1:55:${n} \
+    -netdev tap,id=network0,ifname=tap${n},script=no,downscript=no \
+    -device virtio-rng \
+    -initrd /initrd.img \
+    -kernel /vmlinuz \
+    -append \"$(cat /kernel.s390x.args) $(cat /additional.kernel.args) ${KERNEL_ARGS}\" \
+    -vnc :${n} \
+    -cpu host \
+    -m ${MEMORY} \
+    -smp ${CPU} ${numa_arg} \
+    -serial pty \
+    -machine s390-ccw-virtio,accel=kvm \
+    -uuid $(cat /proc/sys/kernel/random/uuid) \
+    ${QEMU_ARGS}"
 
 # Remove secondary network devices from qemu_system_cmd and move them to qemu_monitor_cmds, so that those devices are later added after VM is started using qemu monitor to avoid primary network interface to be named other than eth0
 qemu_monitor_cmds=()
