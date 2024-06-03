@@ -10,7 +10,7 @@ export GOFLAGS=-mod=vendor
 
 BIN_DIR = $(CURDIR)/build
 GO ?= go
-GOARCH ?= $(shell uname -m | awk '{if ($$0 == "s390x") print "s390x"; else print "amd64"}')
+GOARCH ?= $(shell uname -m | grep -q s390x && echo s390x || echo amd64)
 
 all: container-run
 
