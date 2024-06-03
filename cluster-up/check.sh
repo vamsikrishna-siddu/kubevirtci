@@ -32,6 +32,9 @@ if [ -f "/sys/module/kvm_intel/parameters/nested" ]; then
 elif [ -f "/sys/module/kvm_amd/parameters/nested" ]; then
 	KVM_NESTED=$( cat /sys/module/kvm_amd/parameters/nested )
 	KVM_ARCH="amd"
+elif [ -f "/sys/module/kvm/parameters/nested" ]; then
+    KVM_NESTED=$( cat /sys/module/kvm/parameters/nested )
+	KVM_ARCH="s390x"
 fi
 
 function is_enabled() {
