@@ -123,15 +123,6 @@ func NewRunCommand() *cobra.Command {
 
 func run(cmd *cobra.Command, args []string) (retErr error) {
 
-	arch := runtime.GOARCH
-	var qemuArg string
-
-	if arch == "s390x" {
-		qemuArg = "virtio-net-ccw"
-	} else {
-		qemuArg = "virtio-net-pci"
-	}
-
 	prefix, err := cmd.Flags().GetString("prefix")
 	if err != nil {
 		return err
@@ -427,6 +418,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	// Add serial pty so we can do stuff like 'screen /dev/pts0' to access
 	// the VM console from the container without ssh
 	qemuArgs += " -serial pty"
+	arch := runtime.GOARCH
+	var qemuDevice string
+
+	if arch == "s390x" {
+		qemuDevice = "virtio-net-ccw"
+	} else {
+		qemuDevice = "virtio-net-pci"
+	}
 
 	wg := sync.WaitGroup{}
 	wg.Add(int(nodes))
@@ -441,7 +440,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			macSuffix := fmt.Sprintf("%02x", macCounter)
 			macCounter++
 
-			nodeQemuArgs = fmt.Sprintf("%s -device %s,netdev=secondarynet%s,mac=52:55:00:d1:56:%s -netdev tap,id=secondarynet%s,ifname=stap%s,script=no,downscript=no", nodeQemuArgs, qemuArg, netSuffix, macSuffix, netSuffix, netSuffix)
+			nodeQemuArgs = fmt.Sprintf("%s -device %s,netdev=secondarynet%s,mac=52:55:00:d1:56:%s -netdev tap,id=secondarynet%s,ifname=stap%s,script=no,downscript=no", nodeQemuArgs, qemuDevice, netSuffix, macSuffix, netSuffix, netSuffix)
 		}
 
 		nodeName := nodeNameFromIndex(x + 1)

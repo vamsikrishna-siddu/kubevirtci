@@ -1,6 +1,6 @@
-FROM quay.io/fedora/fedora:39 AS kernelfiles
+FROM quay.io/fedora/fedora:39 AS customizevmimage
 
-ARG ARCH
+ARG BUILDARCH
 
 ARG centos_version
 
@@ -19,10 +19,10 @@ COPY scripts/download_box.sh /
 RUN echo "Centos9 version $centos_version"
 
 
-RUN CENTOS_URL=$(eval echo \$CENTOS_URL_${ARCH}) && \
+RUN CENTOS_URL=$(eval echo \$CENTOS_URL_${BUILDARCH}) && \
    /download_box.sh $CENTOS_URL
 
-RUN if test "${ARCH}" != "s390x"; then \
+RUN if test "${BUILDARCH}" != "s390x"; then \
        curl -L -o /initramfs-amd64.img http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/initrd.img && \
        curl -L -o /vmlinuz-amd64  http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/vmlinuz; \
     else \
@@ -37,7 +37,7 @@ RUN if test "${ARCH}" != "s390x"; then \
 
 FROM quay.io/fedora/fedora:39
 
-ARG ARCH
+ARG BUILDARCH
 
 RUN dnf -y install jq iptables iproute dnsmasq qemu socat openssh-clients screen bind-utils tcpdump iputils && dnf clean all
 
@@ -54,16 +54,16 @@ ENV DOCKERIZE_URL_s390x https://github.com/ibm-jitendra/kubevirt_pkgs/raw/main/d
 ENV DOCKERIZE_URL_amd64 https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
 
-RUN DOCKERIZE_URL=$(eval echo \$DOCKERIZE_URL_${ARCH}) && \
+RUN DOCKERIZE_URL=$(eval echo \$DOCKERIZE_URL_${BUILDARCH}) && \
     echo "Downloading from $DOCKERIZE_URL" && \
-    curl -L -o dockerize-linux-$ARCH.tar.gz $DOCKERIZE_URL && \
-    tar -xzvf dockerize-linux-$ARCH.tar.gz && \
+    curl -L -o dockerize-linux-$BUILDARCH.tar.gz $DOCKERIZE_URL && \
+    tar -xzvf dockerize-linux-$BUILDARCH.tar.gz && \
     chmod u+x dockerize && \
     mv dockerize /usr/local/bin/
 
 
-COPY  --from=kernelfiles /box.qcow2 box.qcow2
-COPY --from=kernelfiles /vmlinuz-* /vmlinuz
-COPY --from=kernelfiles /initramfs-* /initrd.img
+COPY  --from=customizevmimage /box.qcow2 box.qcow2
+COPY --from=customizevmimage /vmlinuz-* /vmlinuz
+COPY --from=customizevmimage /initramfs-* /initrd.img
 
 COPY scripts/* /
