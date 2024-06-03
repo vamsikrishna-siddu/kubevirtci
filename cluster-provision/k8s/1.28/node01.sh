@@ -5,6 +5,7 @@ set -ex
 ARCH=$(uname -m)
 SSH_USER="vagrant"
 
+# For the s390x architecture, set the user to cloud-user.
 if [ "$ARCH" == "s390x" ]; then
    SSH_USER="cloud-user"
 fi

@@ -215,6 +215,7 @@ sysctl --system
 
 systemctl restart NetworkManager
 
+# No need to modify the ethernet connection incase of s390x Architecture.
 if [ "$arch" != "s390x" ]; then
 nmcli connection modify "System eth0" \
    ipv6.method auto \
@@ -312,7 +313,7 @@ kubeadm_raw_ipv6=/tmp/kubeadm_ipv6.conf
 kubeadm_manifest="/etc/kubernetes/kubeadm.conf"
 kubeadm_manifest_ipv6="/etc/kubernetes/kubeadm_ipv6.conf"
 
-# envsubst is not available by default in s390x.
+# envsubst pkg is not available by default in s390x Architecture.
 if [ "$arch" == "s390x" ]; then 
    dnf install -y gettext
 fi

@@ -15,6 +15,7 @@ VM_USER="vagrant"
 VM_SSH_KEY="vagrant.key"
 ARCH=$(uname -m)
 
+# For the s390x architecture, set the user to cloud-user.
 if [ "$ARCH" == "s390x" ]; then
   VM_USER="cloud-user"
 fi

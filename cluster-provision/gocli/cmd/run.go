@@ -421,6 +421,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	arch := runtime.GOARCH
 	var qemuDevice string
 
+	// Use virtio-net-ccw device incase of s390x Architecture.
 	if arch == "s390x" {
 		qemuDevice = "virtio-net-ccw"
 	} else {

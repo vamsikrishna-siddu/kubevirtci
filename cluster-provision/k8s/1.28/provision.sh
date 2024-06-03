@@ -60,7 +60,7 @@ dnf install -y container-selinux
 
 dnf install -y libseccomp-devel
 
-#openvswitch is not available by default from the dnf package.
+#openvswitch is not available by default in s390x Architecture.
 if [ "$ARCH" == "s390x" ]; then
  dnf install -y https://kojipkgs.fedoraproject.org//packages/openvswitch/2.16.0/2.fc36/s390x/openvswitch-2.16.0-2.fc36.s390x.rpm
  systemctl enable openvswitch

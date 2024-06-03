@@ -4,6 +4,14 @@ set -ex
 
 source /var/lib/kubevirtci/shared_vars.sh
 
+ARCH=$(uname -m)
+SSH_USER="vagrant"
+
+# For the s390x architecture, set the user to cloud-user.
+if [ "$ARCH" == "s390x" ]; then
+   SSH_USER="cloud-user"
+fi
+
 nodeip=
 control_ip=192.168.66.101
 if [ -f /home/$SSH_USER/single_stack ]; then
@@ -11,12 +19,9 @@ if [ -f /home/$SSH_USER/single_stack ]; then
     control_ip=[fd00::101]
 fi
 
-ARCH=$(uname -m)
-SSH_USER="vagrant"
 KUBELET_EXTRA_ARGS_ARCH="--fail-swap-on=false ${nodeip} --feature-gates=CPUManager=true,NodeSwap=true --cpu-manager-policy=static --kube-reserved=cpu=250m --system-reserved=cpu=250m"
 
 if [ "$ARCH" == "s390x" ]; then
-   SSH_USER="cloud-user"
    # cpu manager feature is not supported on s390x.
    KUBELET_EXTRA_ARGS_ARCH="--fail-swap-on=false ${nodeip} --feature-gates=NodeSwap=true"
 
