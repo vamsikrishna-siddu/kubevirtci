@@ -25,7 +25,6 @@ find "$DIR/${provision_dir}/manifests/" -type f -name '*.yaml' \
     -not -name 'cni*.yaml' \
     -not -name 'cdi*-cr.yaml' \
     -not -name 'cdi*-operator.yaml' \
-    -not -name 'whereabouts-*.yaml' \
     -print -exec ${ksh} create -f {} \;
 
 # wait for pods to get ready (we do this repeatedly to give the pods created by the operators time to come up)
